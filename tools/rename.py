@@ -6,7 +6,7 @@ def clean_filename(filename):
     name, ext = os.path.splitext(filename)
     
     # 1. Remove specific characters: ( ) [ ] !
-    for char in "()[]!":
+    for char in "()[]!+":
         name = name.replace(char, "")
     
     # 2. Replace spaces with periods
@@ -27,7 +27,7 @@ def main():
             
             # Skip files that already have -source at the end to prevent double-processing
             # (Matches logic of the original batch file, but does it per-file)
-            if filename.endswith("-source.mkv"):
+            if filename.endswith(("-source.mkv", "-av1.mkv", "-output.mkv")):
                 continue
 
             new_name = clean_filename(filename)

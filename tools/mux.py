@@ -165,6 +165,12 @@ def mux_files():
         filename = os.path.basename(av1_file)
         base_name = filename.replace("-av1.mkv", "")
 
+        # An empty file is an encode that died before mkvmerge wrote anything.
+        # Muxing it would produce a valid-looking output with no video in it.
+        if os.path.getsize(av1_file) == 0:
+            print(f"[SKIP] {filename} is empty; the encode did not finish.")
+            continue
+
         # Check for matching source file in Input folder
         possible_sources = [
             os.path.join(input_dir, f"{base_name}.mkv"),
@@ -263,13 +269,17 @@ def mux_files():
                 os.remove(timestamp_file)
 
             # Delete intermediate AV1 file after successful mux (mirrors Windows behavior)
-            if os.path.exists(final_output) and os.path.exists(av1_file):
+            # Only once there is a real file to replace it with: this is the
+            # only copy of the encode.
+            if os.path.exists(final_output) and os.path.getsize(final_output) > 0:
                 print(f"[{base_name}] Deleting intermediate AV1 file...")
                 try:
                     os.remove(av1_file)
                     print(f"[{base_name}] Deleted: {os.path.basename(av1_file)}")
                 except OSError as e:
                     print(f"[{base_name}] [WARN] Could not delete intermediate file: {e}")
+            else:
+                print(f"[FAIL] No muxed output for {base_name}; keeping {filename}.")
 
         except subprocess.CalledProcessError:
             print(f"\n[FAIL] Could not process {base_name}. Skipping.")
